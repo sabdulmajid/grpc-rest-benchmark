@@ -91,8 +91,8 @@ export default class RestServer implements IServer {
 
     this.server.post("/orders", async (req: express.Request, res: express.Response) => {
       const order = (req.body as Order);
-      const response = await this.db.insertOrder(order);
-      res.send(response);
+      await this.db.insertOrder(order);
+      res.status(201).send();
     }); // Creates a new order
 
     this.server.patch("/user/:id", async (req: express.Request, res: express.Response) => {
@@ -102,8 +102,8 @@ export default class RestServer implements IServer {
         ...updates,
         id: userId,
       }
-      const response = await this.db.updateUser(patch);
-      res.send(response);
+      await this.db.updateUser(patch);
+      res.status(200).send();
     }); // Updates a user's email or password
 
     this.server.delete("/order/:id", async (req: express.Request, res: express.Response) => {

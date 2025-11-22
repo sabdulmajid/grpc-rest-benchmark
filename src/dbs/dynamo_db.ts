@@ -13,8 +13,16 @@ export default class DynamoDB implements IDatabase {
   };
 
   async queryRandomProduct() {
-    ///TODO: Implement this--replace the line below
-    return new Promise<Product>(() => { });
+    const command = new ScanCommand({
+      TableName: "Products",
+    });
+
+    const response = await this.docClient.send(command);
+    if (response.Items && response.Items.length > 0) {
+      const randomIndex = Math.floor(Math.random() * response.Items.length);
+      return response.Items[randomIndex] as Product;
+    }
+    throw new Error("No products found");
   };
 
   async queryProductById(productId: string) {
@@ -30,8 +38,25 @@ export default class DynamoDB implements IDatabase {
   };
 
   async queryAllProducts(category?: string) {
-    ///TODO: Implement this--replace the line below
-    return new Promise<Product[]>(() => { });
+    if (category) {
+      // Filter by category
+      const command = new ScanCommand({
+        TableName: "Products",
+        FilterExpression: "categoryId = :categoryId",
+        ExpressionAttributeValues: {
+          ":categoryId": category,
+        },
+      });
+      const response = await this.docClient.send(command);
+      return response.Items as Product[];
+    } else {
+      // Get all products
+      const command = new ScanCommand({
+        TableName: "Products",
+      });
+      const response = await this.docClient.send(command);
+      return response.Items as Product[];
+    }
   };
 
   async queryAllCategories() {
@@ -103,13 +128,44 @@ export default class DynamoDB implements IDatabase {
   };
 
   async insertOrder(order: Order): Promise<void> {
-    ///TODO: Implement this--replace the line below. Make sure the deleteOrder is called after insertOrder. You can use "await".
-    return new Promise<void>(() => { });
+    const command = new PutCommand({
+      TableName: "Orders",
+      Item: order,
+    });
+    await this.docClient.send(command);
+    await this.deleteOrder(order.id);
   }
 
   async updateUser(patch: UserPatchRequest): Promise<void> {
-    ///TODO: Implement this--replace the line below
-    return new Promise<void>(() => { });
+    const updateExpressions: string[] = [];
+    const expressionAttributeValues: any = {};
+    const expressionAttributeNames: any = {};
+    
+    if (patch.email !== undefined) {
+      updateExpressions.push("#email = :email");
+      expressionAttributeValues[":email"] = patch.email;
+      expressionAttributeNames["#email"] = "email";
+    }
+    
+    if (patch.password !== undefined) {
+      updateExpressions.push("#password = :password");
+      expressionAttributeValues[":password"] = patch.password;
+      expressionAttributeNames["#password"] = "password";
+    }
+    
+    if (updateExpressions.length > 0) {
+      const command = new UpdateCommand({
+        TableName: "Users",
+        Key: {
+          id: patch.id,
+        },
+        UpdateExpression: `SET ${updateExpressions.join(", ")}`,
+        ExpressionAttributeValues: expressionAttributeValues,
+        ExpressionAttributeNames: expressionAttributeNames,
+      });
+      
+      await this.docClient.send(command);
+    }
   };
 
   // This is to delete the inserted order to avoid database data being contaminated also to make the data in database consistent with that in the json files so the comparison will return true.
