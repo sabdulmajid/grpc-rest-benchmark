@@ -1,6 +1,7 @@
 import { Product } from "../compiled_proto/app";
 import { IDatabase } from "../interfaces";
 import { Category, Order, User, UserPatchRequest } from "../types";
+import logger from '../logger';
 import mysql from "mysql2/promise";
 
 export default class MySqlDB implements IDatabase {
@@ -14,7 +15,7 @@ export default class MySqlDB implements IDatabase {
       port: parseInt(process.env.RDS_PORT), // Convert port to a number
       database: process.env.RDS_DATABASE,
     });
-    console.log("MySQL connected!");
+    logger.info("MySQL connected!");
   }
 
   constructor() {

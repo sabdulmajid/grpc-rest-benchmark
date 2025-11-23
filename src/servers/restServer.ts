@@ -2,6 +2,7 @@ import { IDatabase, IServer } from "../interfaces";
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
+import logger from '../logger';
 import bodyParser from "body-parser";
 import { AllProductsRequest, Order, OrderRequest, ProductRequest, UserPatchRequest, UserRequest } from "../types";
 
@@ -9,6 +10,8 @@ export default class RestServer implements IServer {
 
   db: IDatabase;
   server: any;
+
+  private requestCount: number = 0;
 
   constructor(db: IDatabase) {
     this.db = db;
@@ -20,6 +23,21 @@ export default class RestServer implements IServer {
     this.server.use(cors());
     this.server.use(morgan("tiny"));
     this.server.use(bodyParser.json());
+
+    // middleware to log incoming requests and increment request count
+    this.server.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+      this.requestCount++;
+      logger.info({
+        message: `Incoming request: ${req.method} ${req.originalUrl}`,
+        method: req.method,
+        url: req.originalUrl,
+        params: req.params,
+        query: req.query,
+        body: req.body,
+        totalRequests: this.requestCount
+      });
+      next();
+    });
 
     this.server.get("/", (req: express.Request, res: express.Response) => res.send("Hello, World!"));
 
@@ -116,13 +134,18 @@ export default class RestServer implements IServer {
         await this.db.deleteOrder(id);
         res.status(204).send(); // No Content
       } catch (error) {
-        console.error(`Error deleting order with id ${id}:`, error);
+        logger.info({
+          message: `Error deleting order with id ${id}`,
+          error,
+          orderId: id,
+          totalRequests: this.requestCount
+        });
         res.status(500).send({ error: 'Failed to delete order' });
       }
     }); // Deletes an order by id
 
     this.server.listen(port, () => {
-      console.log(`REST server listening on port ${port}`);
+      logger.info(`REST server listening on port ${port}`);
     });
   }
 }
