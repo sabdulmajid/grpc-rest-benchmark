@@ -16,6 +16,7 @@
         "@aws-sdk/lib-dynamodb": "^3.352.0",
         "@grpc/grpc-js": "^1.9.0",
         "@grpc/proto-loader": "^0.7.10",
+        "aws-sdk": "^2.1692.0",
         "body-parser": "^1.20.2",
         "cors": "^2.8.5",
         "dotenv": "^16.1.4",
@@ -28,7 +29,9 @@
         "nice-grpc": "^2.1.7",
         "protobufjs": "^7.2.6",
         "typescript": "^5.3.3",
-        "uuidv4": "^6.2.13"
+        "uuidv4": "^6.2.13",
+        "winston": "^3.18.3",
+        "winston-cloudwatch": "^6.3.0"
     },
     "devDependencies": {
         "@types/body-parser": "^1.19.5",
